@@ -1,6 +1,8 @@
 const bcript = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const IncorrectDataError = require('../errors/incorrect-data-err');
+const LoginError = require('../errors/login-err');
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
@@ -21,9 +23,9 @@ module.exports.createUser = (req, res, next) => {
   bcript.hash(password, 10)
     .then((hash) => User.create({
       name, about, avatar, email, password: hash,
-    }, { new: true, runValidators: true }))
+    }))
     .then((user) => res.send({ data: user }))
-    .catch(next);
+    .catch((err) => next(new IncorrectDataError(err)));
 };
 module.exports.patchProfileInfo = (req, res, next) => {
   const { name, about } = req.body;
@@ -39,7 +41,7 @@ module.exports.patchProfileAvatar = (req, res, next) => {
     .then((user) => res.send({ data: user }))
     .catch(next);
 };
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   User.findUserByCredentials(email, password)
     .then((user) => {
@@ -50,7 +52,5 @@ module.exports.login = (req, res) => {
       );
       res.send({ token });
     })
-    .catch((err) => {
-      res.status(401).send({ message: err.message }); // через next не передается err в app.js тк ошибки формируются в findUserByCredentials
-    });
+    .catch((err) => next(new LoginError(err.message)));
 };

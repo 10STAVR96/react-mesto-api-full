@@ -59,7 +59,7 @@ app.use(errorLogger);
 app.use(errors());
 app.use((err, req, res, next) => {
   const { statusCode = 500, message, name } = err;
-  if (name === 'ValidationError') return res.status(400).send({ message: 'Переданы некорректные данные' }); // эта конструкция на случай, если валидация запросов через celebrate каким то образом не сработает
+  if (name === 'ValidationError' || statusCode === 400) return res.status(400).send({ message: 'Переданы некорректные данные' }); // эта конструкция на случай, если валидация запросов через celebrate каким то образом не сработает
   res
     .status(statusCode)
     .send({ message: statusCode === 500 ? 'На сервере произошла ошибка' : message });
