@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const rateLimit = require('express-rate-limit');
 const { errors } = require('celebrate');
-const cors = require('cors');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const usersRouter = require('./routes/users');
 const cardsRouter = require('./routes/cards');
@@ -12,7 +11,6 @@ const authRouter = require('./routes/authRouter');
 const auth = require('./middlewares/auth');
 
 const app = express();
-app.use(cors({ origin: true }));
 const { PORT = 3000 } = process.env;
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -20,7 +18,6 @@ const limiter = rateLimit({
 });
 
 mongoose.connect('mongodb://localhost:27017/mestodb', {
-  useUnifiedTopology: true,
   useNewUrlParser: true,
   useCreateIndex: true,
   useFindAndModify: false,
