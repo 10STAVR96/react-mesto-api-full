@@ -1,8 +1,10 @@
 const bcript = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
-const IncorrectDataError = require('../errors/incorrect-data-err');
+const ConflictDataError = require('../errors/conflict-data-err');
 const LoginError = require('../errors/login-err');
+
+const { JWT_SECRET = 'dev-key' } = process.env;
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
@@ -24,8 +26,8 @@ module.exports.createUser = (req, res, next) => {
     .then((hash) => User.create({
       name, about, avatar, email, password: hash,
     }))
-    .then((user) => res.send({ data: user }))
-    .catch((err) => next(new IncorrectDataError(err)));
+    .then((user) => res.status(201).send({ _id: user._id, email }))
+    .catch((err) => next(new ConflictDataError(err)));
 };
 module.exports.patchProfileInfo = (req, res, next) => {
   const { name, about } = req.body;
@@ -47,7 +49,7 @@ module.exports.login = (req, res, next) => {
     .then((user) => {
       const token = jwt.sign(
         { _id: user._id },
-        '8bbd4030f8582f167501f0f684544cca6c49b7145c49551e1a2a2636d3e486c0',
+        JWT_SECRET,
         { expiresIn: '7d' },
       );
       res.send({ token });

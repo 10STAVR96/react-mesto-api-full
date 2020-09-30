@@ -14,7 +14,7 @@ module.exports.postCards = (req, res, next) => {
 };
 module.exports.deleteCardById = (req, res, next) => {
   Card.findOneAndDelete({ _id: req.params.id, owner: req.user._id })
-    .orFail({ message: 'Ошибка: карточки с таким id не существует', statusCode: 404 })
+    .orFail({ message: 'Ошибка: у вас нет прав для этого действия', statusCode: 403 })
     .then((card) => res.send({ data: card }))
     .catch(next);
 };

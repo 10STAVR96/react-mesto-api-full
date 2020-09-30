@@ -1,5 +1,7 @@
 const usersRouter = require('express').Router();
 const { celebrate, Joi } = require('celebrate');
+
+const linkValidation = /^((http|https):\/\/)(www\.)?([A-Za-z0-9.-]{1,256})\.[A-Za-z]{2,20}/;
 const {
   getUsers,
   getUsersById,
@@ -10,7 +12,7 @@ const {
 usersRouter.get('/', getUsers);
 usersRouter.get('/:id', celebrate({
   params: Joi.object().keys({
-    id: Joi.string().alphanum().length(24),
+    id: Joi.string().alphanum().length(24).hex(),
   }),
 }), getUsersById);
 usersRouter.patch('/me', celebrate({
@@ -21,7 +23,7 @@ usersRouter.patch('/me', celebrate({
 }), patchProfileInfo);
 usersRouter.patch('/me/avatar', celebrate({
   body: Joi.object().keys({
-    link: Joi.string().required(),
+    link: Joi.string().pattern(linkValidation).required(),
   }),
 }), patchProfileAvatar);
 
