@@ -15,8 +15,8 @@ const app = express();
 app.use(cors({ origin: true }));
 const { PORT = 3000 } = process.env;
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: 1000, // 1 second
+  max: 5, // limit of requests per windowMs
 });
 
 mongoose.connect('mongodb://localhost:27017/mestodb', {
