@@ -3,16 +3,16 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const rateLimit = require('express-rate-limit');
-const { celebrate, Joi, errors } = require('celebrate');
+const { errors } = require('celebrate');
+const cors = require('cors');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const usersRouter = require('./routes/users');
 const cardsRouter = require('./routes/cards');
+const authRouter = require('./routes/authRouter');
 const auth = require('./middlewares/auth');
-const { login, createUser } = require('./controllers/users');
-
-const linkValidation = /^((http|https):\/\/)(www\.)?([A-Za-z0-9.-]{1,256})\.[A-Za-z]{2,20}/;
 
 const app = express();
+app.use(cors({ origin: true }));
 const { PORT = 3000 } = process.env;
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -20,6 +20,7 @@ const limiter = rateLimit({
 });
 
 mongoose.connect('mongodb://localhost:27017/mestodb', {
+  useUnifiedTopology: true,
   useNewUrlParser: true,
   useCreateIndex: true,
   useFindAndModify: false,
@@ -36,21 +37,7 @@ app.get('/crash-test', () => {
     throw new Error('Сервер сейчас упадёт');
   }, 0);
 });
-app.post('/signin', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(2).max(500),
-  }),
-}), login);
-app.post('/signup', celebrate({
-  body: Joi.object().keys({
-    name: Joi.string().required().min(2).max(30),
-    about: Joi.string().required().min(2).max(30),
-    avatar: Joi.string().pattern(linkValidation).required(),
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(2).max(500),
-  }),
-}), createUser);
+app.use('/', authRouter);
 
 app.use(auth);
 
