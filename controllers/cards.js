@@ -1,4 +1,6 @@
 const Card = require('../models/card');
+const ForbiddenError = require('../errors/forbidden-err');
+const NotFoundError = require('../errors/not-found-err');
 
 module.exports.getCards = (req, res, next) => {
   Card.find({})
@@ -13,9 +15,14 @@ module.exports.postCards = (req, res, next) => {
     .catch(next);
 };
 module.exports.deleteCardById = (req, res, next) => {
-  Card.findOneAndDelete({ _id: req.params.id, owner: req.user._id })
-    .orFail({ message: 'Ошибка: у вас нет прав для этого действия', statusCode: 403 })
-    .then((card) => res.send({ data: card }))
+  const owner = req.user._id;
+  Card.findOne({ _id: req.params.id })
+    .orFail(() => new NotFoundError('Нет карточки с таким id'))
+    .then((card) => {
+      if (String(card.owner) !== owner) throw new ForbiddenError('Не достаточно прав');
+      return Card.findByIdAndDelete(card._id);
+    })
+    .then((success) => res.send(success))
     .catch(next);
 };
 module.exports.likeCard = (req, res, next) => {
@@ -24,7 +31,7 @@ module.exports.likeCard = (req, res, next) => {
     { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
     { new: true },
   )
-    .orFail({ message: 'Ошибка: карточки с таким id не существует', statusCode: 404 })
+    .orFail(() => new NotFoundError('Нет карточки с таким id'))
     .then((user) => res.send({ data: user }))
     .catch(next);
 };
@@ -34,7 +41,7 @@ module.exports.dislikeCard = (req, res, next) => {
     { $pull: { likes: req.user._id } }, // убрать _id из массива
     { new: true },
   )
-    .orFail({ message: 'Ошибка: карточки с таким id не существует', statusCode: 404 })
+    .orFail(() => new NotFoundError('Нет карточки с таким id'))
     .then((user) => res.send({ data: user }))
     .catch(next);
 };

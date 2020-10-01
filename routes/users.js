@@ -7,9 +7,11 @@ const {
   getUsersById,
   patchProfileInfo,
   patchProfileAvatar,
+  getUserInfo,
 } = require('../controllers/users');
 
 usersRouter.get('/', getUsers);
+usersRouter.get('/me', getUserInfo);
 usersRouter.get('/:id', celebrate({
   params: Joi.object().keys({
     id: Joi.string().alphanum().length(24).hex(),

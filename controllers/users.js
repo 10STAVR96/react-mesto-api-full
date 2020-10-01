@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const ConflictDataError = require('../errors/conflict-data-err');
 const LoginError = require('../errors/login-err');
+const NotFoundError = require('../errors/not-found-err');
 
 const { JWT_SECRET = 'dev-key' } = process.env;
 
@@ -14,8 +15,16 @@ module.exports.getUsers = (req, res, next) => {
 };
 module.exports.getUsersById = (req, res, next) => {
   User.findOne({ _id: req.params.id })
-    .orFail({ message: 'Нет пользователя с таким id', statusCode: 404 })
+    .orFail(() => new NotFoundError('Нет пользователя с таким id'))
     .then((user) => res.send({ data: user }))
+    .catch(next);
+};
+module.exports.getUserInfo = (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => {
+      if (!user) throw new NotFoundError('Нет пользователя с таким id');
+      res.send(user);
+    })
     .catch(next);
 };
 module.exports.createUser = (req, res, next) => {
@@ -32,14 +41,14 @@ module.exports.createUser = (req, res, next) => {
 module.exports.patchProfileInfo = (req, res, next) => {
   const { name, about } = req.body;
   User.findOneAndUpdate({ _id: req.user._id }, { name, about }, { new: true, runValidators: true })
-    .orFail({ message: 'Нет пользователя с таким id', statusCode: 404 })
+    .orFail(() => new NotFoundError('Нет пользователя с таким id'))
     .then((user) => res.send({ data: user }))
     .catch(next);
 };
 module.exports.patchProfileAvatar = (req, res, next) => {
   const { link } = req.body;
   User.findOneAndUpdate({ _id: req.user._id }, { avatar: link }, { new: true, runValidators: true })
-    .orFail({ message: 'Нет пользователя с таким id', statusCode: 404 })
+    .orFail(() => new NotFoundError('Нет пользователя с таким id'))
     .then((user) => res.send({ data: user }))
     .catch(next);
 };
